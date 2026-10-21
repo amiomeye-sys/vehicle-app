@@ -76,7 +76,7 @@ def calculate_valid_upto(date_str):
 def process_and_save_photo(file_obj, data_id):
     try:
         in_img = Image.open(file_obj.stream)
-        in_img.thumbnail((400, 400)) # RAM safety-r jonno thumbnail resize kora holo
+        in_img.thumbnail((400, 400))
         final_photo = in_img.convert("RGB")
     except Exception:
         final_photo = Image.new("RGB", (300, 400), (255, 255, 255))
@@ -136,6 +136,7 @@ def generate_pdf_file(data, output_path):
     photo_y = sig_y + 15
     photo_w, photo_h = 2.5 * cm, 3.5 * cm
     shifted_left = left_margin + (1.0 * cm)
+    driver_sig_x = shifted_left - (1.0 * cm)  # 1cm left side shifted
 
     photo_path = data.get('photo_path')
     if photo_path and os.path.exists(photo_path):
@@ -147,7 +148,7 @@ def generate_pdf_file(data, output_path):
             pass
 
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(shifted_left, sig_y, "Signature of Driver")
+    c.drawString(driver_sig_x, sig_y, "Signature of Driver")
     c.drawString(width - 200, sig_y, "Signature of Regd. Owner")
     c.showPage()
     c.save()
