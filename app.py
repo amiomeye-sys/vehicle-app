@@ -230,4 +230,80 @@ def admin_dashboard():
     submissions = [dict(row) for row in rows]
     conn.close()
 
-    return render_template('admin_dashboard
+    return render_template('admin_dashboard.html', submissions=submissions, today=today_str, search_date=search_date_raw, search_gari=request.args.get('search_gari', ''))
+
+@app.route('/admin/edit/<int:data_id>', methods=['GET', 'POST'])
+def edit_submission(data_id):
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        owner_name = request.form.get('owner_name')
+        owner_father = request.form.get('owner_father')
+        owner_address = request.form.get('owner_address')
+        gari_number = request.form.get('gari_number')
+        engine_no = request.form.get('engine_no')
+        chassis_no = request.form.get('chassis_no')
+        driver_name = request.form.get('driver_name')
+        driver_father = request.form.get('driver_father')
+        driver_address = request.form.get('driver_address')
+        license_no = request.form.get('license_no')
+        
+        new_date_raw = request.form.get('date')
+        date_str = new_date_raw
+        if new_date_raw:
+            try:
+                date_str = datetime.strptime(new_date_raw, "%Y-%m-%d").strftime("%d/%m/%Y")
+            except Exception:
+                pass
+
+        cursor.execute('''
+            UPDATE submissions SET owner_name=?, owner_father=?, owner_address=?, gari_number=?, engine_no=?, chassis_no=?, driver_name=?, driver_father=?, driver_address=?, license_no=?, date=?
+            WHERE id=?
+        ''', (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date_str, data_id))
+
+        file = request.files.get('driver_photo')
+        if file and file.filename != '':
+            photo_path = process_and_save_photo(file, data_id)
+            cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
+
+        conn.commit()
+        conn.close()
+        return redirect(url_for('admin_dashboard'))
+
+    cursor.execute("SELECT * FROM submissions WHERE id = ?", (data_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return "Record Not Found", 404
+
+    item = dict(row)
+    try:
+        formatted_date = datetime.strptime(item['date'], "%d/%m/%Y").strftime("%Y-%m-%d")
+    except Exception:
+        formatted_date = datetime.now().strftime("%Y-%m-%d")
+
+    return render_template('edit_submission.html', item=item, formatted_date=formatted_date)
+
+@app.route('/generate_pdf/<int:data_id>')
+def pdf_preview(data_id):
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM submissions WHERE id = ?", (data_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return "Not found", 404
+    
+    item = dict(row)
+    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"doc_{data_id}.pdf")
+    generate_pdf_file(item, pdf_path)
+    return send_file(pdf_path, mimetype='application/pdf')
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
