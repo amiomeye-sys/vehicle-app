@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Submission #{{ item.id }}</title>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #f59e0b; }
+        h2 { color: #f59e0b; text-align: center; width: 100%; margin-bottom: 20px; }
+        .form-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .form-fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 8px; }
+        .full-width { grid-column: span 2; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; color: #cbd5e1; font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="file"] { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; }
+        .photo-section { width: 220px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border: 1px dashed #f59e0b; padding: 15px; border-radius: 8px; background: #0f172a; }
+        .photo-preview { width: 140px; height: 180px; border: 1px solid #334155; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #94a3b8; text-align: center; font-size: 12px; background: #1e293b; overflow: hidden; }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .button-group { grid-column: span 2; display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; background: #10b981; border: none; color: white; font-weight: bold; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        .btn-cancel { flex: 1; padding: 12px; background: #64748b; color: white; text-align: center; font-weight: bold; border-radius: 6px; text-decoration: none; box-sizing: border-box; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>✏️ Edit Submission #{{ item.id }} (Admin)</h2>
+        <form action="/admin/edit/{{ item.id }}" method="POST" enctype="multipart/form-data" class="form-layout">
+            <div class="form-fields">
+                <div class="form-group full-width"><label>Issue Date:</label><input type="date" name="date" value="{{ formatted_date }}" required></div>
+                <div class="form-group"><label>Owner Name:</label><input type="text" name="owner_name" value="{{ item.owner_name }}" required></div>
+                <div class="form-group"><label>Owner Father Name:</label><input type="text" name="owner_father" value="{{ item.owner_father }}" required></div>
+                <div class="form-group full-width"><label>Owner Address:</label><input type="text" name="owner_address" value="{{ item.owner_address }}" required></div>
+                <div class="form-group"><label>Gari Number:</label><input type="text" name="gari_number" value="{{ item.gari_number }}" required></div>
+                <div class="form-group"><label>Engine No:</label><input type="text" name="engine_no" value="{{ item.engine_no }}" required></div>
+                <div class="form-group"><label>Chassis Number:</label><input type="text" name="chassis_no" value="{{ item.chassis_no }}" required></div>
+                <div class="form-group"><label>Driver Name:</label><input type="text" name="driver_name" value="{{ item.driver_name }}" required></div>
+                <div class="form-group"><label>Driver Father Name:</label><input type="text" name="driver_father" value="{{ item.driver_father }}" required></div>
+                <div class="form-group full-width"><label>Driver Address:</label><input type="text" name="driver_address" value="{{ item.driver_address }}" required></div>
+                <div class="form-group full-width"><label>License Number:</label><input type="text" name="license_no" value="{{ item.license_no }}" required></div>
+            </div>
+
+            <div class="photo-section">
+                <label>Driver Photo:</label>
+                <div class="photo-preview" id="previewContainer">
+                    {% if item.photo_path %}
+                        <img src="/{{ item.photo_path }}">
+                    {% else %}
+                        No Photo
+                    {% endif %}
+                </div>
+                <input type="file" name="driver_photo" accept="image/*" id="photoInput" onchange="previewImage(event)">
+            </div>
+
+            <div class="button-group">
+                <button type="submit">💾 Save Changes</button>
+                <a href="/admin" class="btn-cancel">❌ Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('previewContainer');
+                output.innerHTML = `<img src="${reader.result}">`;
+            };
+            if(event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+    </script>
+</body>
+</html>

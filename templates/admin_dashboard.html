@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Submissions</title>
+    <style>
+        body { background-color: #0f172a; color: #fff; font-family: sans-serif; padding: 20px; }
+        .search-card { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #38bdf8; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .search-card input { padding: 8px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: #fff; }
+        .btn-search { padding: 8px 16px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-reset { padding: 8px 16px; background: #64748b; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #1e293b; }
+        th, td { padding: 12px; border: 1px solid #334155; text-align: left; }
+        th { background: #38bdf8; color: #000; }
+        .btn { padding: 6px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .btn-edit { padding: 6px 12px; background: #f59e0b; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        .highlight { color: #38bdf8; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>📄 Live Admin Dashboard (Submissions)</h2>
+    
+    <!-- Filter/Search Bar -->
+    <form class="search-card" method="GET" action="/admin">
+        <div>
+            <label>Date Filter: </label>
+            <input type="date" name="search_date" value="{{ search_date }}">
+        </div>
+        <div>
+            <label>Gari Number: </label>
+            <input type="text" name="search_gari" placeholder="Ex: WB12XX1234" value="{{ search_gari }}">
+        </div>
+        <button type="submit" class="btn-search">🔍 Search</button>
+        <a href="/admin" class="btn-reset">🔄 Reset (Today's Data)</a>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Issue Date</th>
+                <th>Gari Number</th>
+                <th>Owner Name</th>
+                <th>Driver Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in submissions %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.date }}</td>
+                <td class="highlight">{{ item.gari_number }}</td>
+                <td>{{ item.owner_name }}</td>
+                <td>{{ item.driver_name }}</td>
+                <td>
+                    <a class="btn-edit" href="/admin/edit/{{ item.id }}">✏️ Edit / Photo</a>
+                    <a class="btn" href="/generate_pdf/{{ item.id }}" target="_blank">👁 Preview PDF</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #94a3b8;">No submissions found for today / specified criteria.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
