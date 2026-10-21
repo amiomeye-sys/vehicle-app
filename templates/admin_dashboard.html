@@ -4,23 +4,24 @@
     <meta charset="UTF-8">
     <title>Admin Dashboard - Submissions</title>
     <style>
-        body { background-color: #0f172a; color: #fff; font-family: sans-serif; padding: 20px; }
-        .search-card { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #38bdf8; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-        .search-card input { padding: 8px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: #fff; }
-        .btn-search { padding: 8px 16px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-reset { padding: 8px 16px; background: #64748b; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #1e293b; }
-        th, td { padding: 12px; border: 1px solid #334155; text-align: left; }
-        th { background: #38bdf8; color: #000; }
-        .btn { padding: 6px 12px; background: #3b82f6; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .btn-edit { padding: 6px 12px; background: #f59e0b; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #0d1527; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; padding: 15px; }
+        h3 { color: #38bdf8; margin-bottom: 12px; font-size: 18px; }
+        .search-card { background: #131d31; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #25334d; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .search-card input { padding: 5px 8px; border-radius: 4px; border: 1px solid #1e293b; background: #0d1527; color: #fff; font-size: 12px; }
+        .btn-search { padding: 6px 14px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-reset { padding: 6px 14px; background: #475569; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; background: #131d31; border-radius: 6px; overflow: hidden; border: 1px solid #25334d; }
+        th, td { padding: 8px 12px; border: 1px solid #25334d; text-align: left; font-size: 12px; }
+        th { background: #1e293b; color: #38bdf8; font-weight: bold; }
+        .btn { padding: 4px 10px; background: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .btn-edit { padding: 4px 10px; background: #f59e0b; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 5px; font-size: 11px; }
         .highlight { color: #38bdf8; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>📄 Live Admin Dashboard (Submissions)</h2>
+    <h3>📄 Live Admin Dashboard (Submissions)</h3>
     
-    <!-- Filter/Search Bar -->
     <form class="search-card" method="GET" action="/admin">
         <div>
             <label>Date Filter: </label>
@@ -60,7 +61,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #94a3b8;">No submissions found for today / specified criteria.</td>
+                <td colspan="6" style="text-align: center; color: #64748b;">No submissions found for today / specified criteria.</td>
             </tr>
             {% endfor %}
         </tbody>
