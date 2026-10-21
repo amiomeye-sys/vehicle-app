@@ -4,7 +4,6 @@ import sqlite3
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, send_file, redirect, url_for
 from PIL import Image
-from rembg import remove
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
@@ -77,16 +76,8 @@ def calculate_valid_upto(date_str):
 def process_and_save_photo(file_obj, data_id):
     try:
         in_img = Image.open(file_obj.stream)
-        in_img.thumbnail((500, 500))  # RAM bachanor jonno choto size kora holo
-        
-        try:
-            # Try background removal safely
-            out_img = remove(in_img)
-            bg = Image.new("RGBA", out_img.size, (255, 255, 255, 255))
-            final_photo = Image.alpha_composite(bg, out_img).convert("RGB")
-        except Exception:
-            # Fallback if memory is low: save normal image without crashing
-            final_photo = in_img.convert("RGB")
+        in_img.thumbnail((400, 400)) # RAM safety-r jonno thumbnail resize kora holo
+        final_photo = in_img.convert("RGB")
     except Exception:
         final_photo = Image.new("RGB", (300, 400), (255, 255, 255))
 
