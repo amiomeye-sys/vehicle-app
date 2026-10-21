@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Details - Vehicle Authorization</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #0d1527; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #38bdf8; }
+        h3 { color: #38bdf8; text-align: center; margin-bottom: 15px; font-size: 18px; font-weight: 600; }
+        .instruction { color: #f59e0b; text-align: center; margin-bottom: 15px; font-size: 12px; font-weight: bold; }
+        
+        .preview-box { background: #0a1120; border: 1px solid #25334d; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .row { display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 6px; }
+        .label { font-weight: bold; color: #94a3b8; }
+        .value { color: #fff; font-weight: 600; text-transform: uppercase; text-align: right; }
+        
+        .photo-preview-box { text-align: center; margin-bottom: 15px; }
+        .photo-preview-box img { width: 100px; height: 130px; object-fit: cover; border: 1px solid #38bdf8; border-radius: 4px; }
+
+        .button-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 10px; font-size: 14px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; text-align: center; text-decoration: none; }
+        .btn-confirm { background: #10b981; color: white; }
+        .btn-confirm:hover { background: #059669; }
+        .btn-back { background: #64748b; color: white; }
+        .btn-back:hover { background: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>🔍 Review Your Details</h3>
+        <div class="instruction">Please check if all details are correct before final submission.</div>
+        
+        <form action="/form" method="POST">
+            <!-- Hidden fields to pass data back on confirm -->
+            <input type="hidden" name="owner_name" value="{{ data.owner_name }}">
+            <input type="hidden" name="owner_father" value="{{ data.owner_father }}">
+            <input type="hidden" name="owner_address" value="{{ data.owner_address }}">
+            <input type="hidden" name="gari_number" value="{{ data.gari_number }}">
+            <input type="hidden" name="engine_no" value="{{ data.engine_no }}">
+            <input type="hidden" name="chassis_no" value="{{ data.chassis_no }}">
+            <input type="hidden" name="driver_name" value="{{ data.driver_name }}">
+            <input type="hidden" name="driver_father" value="{{ data.driver_father }}">
+            <input type="hidden" name="driver_address" value="{{ data.driver_address }}">
+            <input type="hidden" name="license_no" value="{{ data.license_no }}">
+            <input type="hidden" name="temp_photo_path" value="{{ temp_photo_path }}">
+            <input type="hidden" name="action_type" value="confirm">
+
+            {% if temp_photo_path %}
+            <div class="photo-preview-box">
+                <img src="/{{ temp_photo_path }}" alt="Driver Photo">
+            </div>
+            {% endif %}
+
+            <div class="preview-box">
+                <div class="row"><span class="label">Owner Name:</span><span class="value">{{ data.owner_name }}</span></div>
+                <div class="row"><span class="label">Owner Father Name:</span><span class="value">{{ data.owner_father }}</span></div>
+                <div class="row"><span class="label">Owner Address:</span><span class="value">{{ data.owner_address }}</span></div>
+                <div class="row"><span class="label">Gari Number:</span><span class="value" style="color: #38bdf8;">{{ data.gari_number }}</span></div>
+                <div class="row"><span class="label">Engine No:</span><span class="value">{{ data.engine_no }}</span></div>
+                <div class="row"><span class="label">Chassis Number:</span><span class="value">{{ data.chassis_no }}</span></div>
+                <div class="row"><span class="label">Driver Name:</span><span class="value">{{ data.driver_name }}</span></div>
+                <div class="row"><span class="label">Driver Father Name:</span><span class="value">{{ data.driver_father }}</span></div>
+                <div class="row"><span class="label">Driver Address:</span><span class="value">{{ data.driver_address }}</span></div>
+                <div class="row"><span class="label">License Number:</span><span class="value">{{ data.license_no }}</span></div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn btn-back" onclick="history.back()">✏️ Go Back & Edit</button>
+                <button type="submit" class="btn btn-confirm">✅ Confirm & Final Submit</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

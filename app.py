@@ -136,7 +136,7 @@ def generate_pdf_file(data, output_path):
     photo_y = sig_y + 15
     photo_w, photo_h = 2.5 * cm, 3.5 * cm
     shifted_left = left_margin + (1.0 * cm)
-    driver_sig_x = shifted_left - (1.0 * cm)  # 1cm left side shifted
+    driver_sig_x = shifted_left - (1.0 * cm)
 
     photo_path = data.get('photo_path')
     if photo_path and os.path.exists(photo_path):
@@ -160,36 +160,49 @@ def index():
 @app.route('/form', methods=['GET', 'POST'])
 def client_form():
     if request.method == 'POST':
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        
-        owner_name = request.form.get('owner_name', '')
-        owner_father = request.form.get('owner_father', '')
-        owner_address = request.form.get('owner_address', '')
-        gari_number = request.form.get('gari_number', '')
-        engine_no = request.form.get('engine_no', '')
-        chassis_no = request.form.get('chassis_no', '')
-        driver_name = request.form.get('driver_name', '')
-        driver_father = request.form.get('driver_father', '')
-        driver_address = request.form.get('driver_address', '')
-        license_no = request.form.get('license_no', '')
-        date_str = datetime.now().strftime("%d/%m/%Y")
-
-        cursor.execute('''
-            INSERT INTO submissions (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date, photo_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date_str, None))
-        
-        data_id = cursor.lastrowid
-
+        form_data = request.form.to_dict()
         file = request.files.get('driver_photo')
+        
+        temp_photo_path = None
         if file and file.filename != '':
-            photo_path = process_and_save_photo(file, data_id)
-            cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
+            temp_filename = f"temp_{datetime.now().timestamp()}.png"
+            temp_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_filename)
+            file.save(temp_photo_path)
+        
+        # If user clicked "Confirm & Final Submit"
+        if request.form.get('action_type') == 'confirm':
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            date_str = datetime.now().strftime("%d/%m/%Y")
 
-        conn.commit()
-        conn.close()
-        return render_template('client_form.html', success=True)
+            cursor.execute('''
+                INSERT INTO submissions (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date, photo_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                form_data.get('owner_name', ''), form_data.get('owner_father', ''), form_data.get('owner_address', ''),
+                form_data.get('gari_number', ''), form_data.get('engine_no', ''), form_data.get('chassis_no', ''),
+                form_data.get('driver_name', ''), form_data.get('driver_father', ''), form_data.get('driver_address', ''),
+                form_data.get('license_no', ''), date_str, None
+            ))
+            
+            data_id = cursor.lastrowid
+            temp_path = form_data.get('temp_photo_path')
+            if temp_path and os.path.exists(temp_path):
+                # Process and move to final upload folder
+                with open(temp_path, 'rb') as f:
+                    final_path = process_and_save_photo(f, data_id)
+                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (final_path, data_id))
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
+
+            conn.commit()
+            conn.close()
+            return render_template('client_form.html', success=True)
+
+        # Otherwise, show Preview Page to client
+        return render_template('client_preview.html', data=form_data, temp_photo_path=temp_photo_path)
 
     return render_template('client_form.html', success=False)
 
