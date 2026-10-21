@@ -81,6 +81,9 @@ def calculate_valid_upto(date_str):
 
 def process_and_save_photo(file_obj, data_id):
     in_img = Image.open(file_obj.stream)
+    # Render free tier RAM limit (512MB) bachanor jonno image thumbnail resize kora holo[cite: 10]
+    in_img.thumbnail((800, 800))
+    
     out_img = remove(in_img, session=fast_session) if fast_session else remove(in_img)
     bg = Image.new("RGBA", out_img.size, (255, 255, 255, 255))
     final_photo = Image.alpha_composite(bg, out_img).convert("RGB")
