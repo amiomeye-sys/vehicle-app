@@ -1,5 +1,6 @@
 import os
 import re
+import sqlite3
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, send_file, redirect, url_for
 from PIL import Image
@@ -14,12 +15,37 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+DB_NAME = 'database.db'
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_name TEXT,
+            owner_father TEXT,
+            owner_address TEXT,
+            gari_number TEXT,
+            engine_no TEXT,
+            chassis_no TEXT,
+            driver_name TEXT,
+            driver_father TEXT,
+            driver_address TEXT,
+            license_no TEXT,
+            date TEXT,
+            photo_path TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
 try:
     fast_session = new_session("u2netp")
 except Exception:
     fast_session = None
-
-SUBMITTED_DATA_STORE = []
 
 TEMPLATE_TEXT = (
     "I, {owner_name} S/W/D of... {owner_father} Resident of... {owner_address} "
@@ -86,7 +112,7 @@ def generate_pdf_file(data, output_path):
 
     clean_data = {}
     for key in ["owner_name", "owner_father", "owner_address", "gari_number", "engine_no", "chassis_no", "driver_name", "driver_father", "driver_address", "license_no"]:
-        val = data.get(key, "").strip()
+        val = data.get(key, "").strip() if data.get(key) else ""
         val = re.sub(r'[\s,\.]+$', '', val)
         if key in ["owner_name", "driver_name", "owner_father", "driver_father"]:
             formatted_val = val.title()
@@ -129,31 +155,42 @@ def generate_pdf_file(data, output_path):
     c.showPage()
     c.save()
 
+@app.route('/')
+def index():
+    return redirect(url_for('client_form'))
+
 @app.route('/form', methods=['GET', 'POST'])
 def client_form():
     if request.method == 'POST':
-        data_id = len(SUBMITTED_DATA_STORE) + 1
-        data = {
-            'id': data_id,
-            'owner_name': request.form.get('owner_name', ''),
-            'owner_father': request.form.get('owner_father', ''),
-            'owner_address': request.form.get('owner_address', ''),
-            'gari_number': request.form.get('gari_number', ''),
-            'engine_no': request.form.get('engine_no', ''),
-            'chassis_no': request.form.get('chassis_no', ''),
-            'driver_name': request.form.get('driver_name', ''),
-            'driver_father': request.form.get('driver_father', ''),
-            'driver_address': request.form.get('driver_address', ''),
-            'license_no': request.form.get('license_no', ''),
-            'date': datetime.now().strftime("%d/%m/%Y"),
-            'photo_path': None
-        }
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        
+        owner_name = request.form.get('owner_name', '')
+        owner_father = request.form.get('owner_father', '')
+        owner_address = request.form.get('owner_address', '')
+        gari_number = request.form.get('gari_number', '')
+        engine_no = request.form.get('engine_no', '')
+        chassis_no = request.form.get('chassis_no', '')
+        driver_name = request.form.get('driver_name', '')
+        driver_father = request.form.get('driver_father', '')
+        driver_address = request.form.get('driver_address', '')
+        license_no = request.form.get('license_no', '')
+        date_str = datetime.now().strftime("%d/%m/%Y")
+
+        cursor.execute('''
+            INSERT INTO submissions (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date, photo_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date_str, None))
+        
+        data_id = cursor.lastrowid
 
         file = request.files.get('driver_photo')
         if file and file.filename != '':
-            data['photo_path'] = process_and_save_photo(file, data_id)
+            photo_path = process_and_save_photo(file, data_id)
+            cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
 
-        SUBMITTED_DATA_STORE.append(data)
+        conn.commit()
+        conn.close()
         return render_template('client_form.html', success=True)
 
     return render_template('client_form.html', success=False)
@@ -171,65 +208,26 @@ def admin_dashboard():
         except Exception:
             search_date = search_date_raw
 
-    filtered = []
-    if search_date or search_gari:
-        for item in SUBMITTED_DATA_STORE:
-            match_date = (item['date'] == search_date) if search_date else True
-            match_gari = (search_gari in item['gari_number'].lower()) if search_gari else True
-            if match_date and match_gari:
-                filtered.append(item)
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM submissions WHERE 1=1"
+    params = []
+
+    if search_date:
+        query += " AND date = ?"
+        params.append(search_date)
+    elif search_gari:
+        query += " AND LOWER(gari_number) LIKE ?"
+        params.append(f"%{search_gari}%")
     else:
-        filtered = [item for item in SUBMITTED_DATA_STORE if item['date'] == today_str]
+        query += " AND date = ?"
+        params.append(today_str)
 
-    return render_template('admin_dashboard.html', submissions=filtered, today=today_str, search_date=search_date_raw, search_gari=request.args.get('search_gari', ''))
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    submissions = [dict(row) for row in rows]
+    conn.close()
 
-@app.route('/admin/edit/<int:data_id>', methods=['GET', 'POST'])
-def edit_submission(data_id):
-    item = next((x for x in SUBMITTED_DATA_STORE if x['id'] == data_id), None)
-    if not item:
-        return "Record Not Found", 404
-
-    if request.method == 'POST':
-        item['owner_name'] = request.form.get('owner_name', item['owner_name'])
-        item['owner_father'] = request.form.get('owner_father', item['owner_father'])
-        item['owner_address'] = request.form.get('owner_address', item['owner_address'])
-        item['gari_number'] = request.form.get('gari_number', item['gari_number'])
-        item['engine_no'] = request.form.get('engine_no', item['engine_no'])
-        item['chassis_no'] = request.form.get('chassis_no', item['chassis_no'])
-        item['driver_name'] = request.form.get('driver_name', item['driver_name'])
-        item['driver_father'] = request.form.get('driver_father', item['driver_father'])
-        item['driver_address'] = request.form.get('driver_address', item['driver_address'])
-        item['license_no'] = request.form.get('license_no', item['license_no'])
-        
-        new_date = request.form.get('date')
-        if new_date:
-            try:
-                item['date'] = datetime.strptime(new_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-            except Exception:
-                item['date'] = new_date
-
-        file = request.files.get('driver_photo')
-        if file and file.filename != '':
-            item['photo_path'] = process_and_save_photo(file, item['id'])
-
-        return redirect(url_for('admin_dashboard'))
-
-    try:
-        formatted_date = datetime.strptime(item['date'], "%d/%m/%Y").strftime("%Y-%m-%d")
-    except Exception:
-        formatted_date = item['date']
-
-    return render_template('edit_submission.html', item=item, formatted_date=formatted_date)
-
-@app.route('/generate_pdf/<int:data_id>')
-def pdf_preview(data_id):
-    item = next((x for x in SUBMITTED_DATA_STORE if x['id'] == data_id), None)
-    if not item:
-        return "Not found", 404
-    
-    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], f"doc_{data_id}.pdf")
-    generate_pdf_file(item, pdf_path)
-    return send_file(pdf_path, mimetype='application/pdf')
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    return render_template('admin_dashboard
