@@ -11,22 +11,23 @@
         .search-card input { padding: 5px 8px; border-radius: 4px; border: 1px solid #1e293b; background: #0d1527; color: #fff; font-size: 12px; }
         .btn-search { padding: 6px 14px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-reset { padding: 6px 14px; background: #475569; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .btn-all { padding: 6px 14px; background: #10b981; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; background: #131d31; border-radius: 6px; overflow: hidden; border: 1px solid #25334d; }
         th, td { padding: 8px 12px; border: 1px solid #25334d; text-align: left; font-size: 12px; }
         th { background: #1e293b; color: #38bdf8; font-weight: bold; }
-        .btn { padding: 4px 10px; background: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; }
-        .btn-edit { padding: 4px 10px; background: #f59e0b; color: black; text-decoration: none; border-radius: 4px; font-weight: bold; margin-right: 5px; font-size: 11px; display: inline-block; }
+        .btn { padding: 4px 10px; background: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; display: inline-block; margin-right: 3px; margin-bottom: 3px; }
+        .btn-edit { background: #f59e0b; color: black; }
+        .btn-print { background: #10b981; color: white; }
         .highlight { color: #38bdf8; font-weight: bold; }
 
-        /* Modal Styles for In-Dashboard PDF Preview */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-        .modal-content { background: #131d31; padding: 15px; border-radius: 8px; width: 80%; max-width: 700px; height: 85vh; display: flex; flex-direction: column; border: 1px solid #38bdf8; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .modal-header h4 { color: #38bdf8; font-size: 16px; }
-        .close-btn { background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .pdf-frame { flex: 1; width: 100%; border: 1px solid #25334d; background: #fff; border-radius: 4px; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-        .btn-print { background: #10b981; color: white; }
+        /* Draggable & Resizable A4 Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal-content { background: #131d31; padding: 10px; border-radius: 8px; width: 210mm; max-width: 95vw; height: 90vh; resize: both; overflow: auto; display: flex; flex-direction: column; border: 2px solid #38bdf8; position: absolute; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: move; background: #1e293b; padding: 6px 10px; border-radius: 4px; }
+        .modal-header h4 { color: #38bdf8; font-size: 14px; }
+        .close-btn { background: #ef4444; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .pdf-frame { flex: 1; width: 100%; border: 1px solid #25334d; background: #fff; border-radius: 4px; min-height: 400px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -42,7 +43,8 @@
             <input type="text" name="search_gari" placeholder="Ex: WB12XX1234" value="{{ search_gari }}">
         </div>
         <button type="submit" class="btn-search">🔍 Search</button>
-        <a href="/admin" class="btn-reset">🔄 Reset (Today's Data)</a>
+        <a href="/admin" class="btn-reset">🔄 Today's Data</a>
+        <a href="/admin?show_all=1" class="btn-all">📂 View All Data (History)</a>
     </form>
 
     <table>
@@ -53,7 +55,7 @@
                 <th>Gari Number</th>
                 <th>Owner Name</th>
                 <th>Driver Name</th>
-                <th>Actions</th>
+                <th>Actions & Print</th>
             </tr>
         </thead>
         <tbody>
@@ -65,31 +67,35 @@
                 <td>{{ item.owner_name }}</td>
                 <td>{{ item.driver_name }}</td>
                 <td>
-                    <a class="btn-edit" href="/admin/edit/{{ item.id }}">✏️ Edit / Photo</a>
-                    <button class="btn" onclick="openPdfModal('{{ item.id }}')">👁 Preview PDF</button>
+                    <a class="btn btn-edit" href="/admin/edit/{{ item.id }}">✏️ Edit</a>
+                    <button class="btn" onclick="openPdfModal('{{ item.id }}')">👁 Preview</button>
+                    <button class="btn btn-print" onclick="directPrint('{{ item.id }}')">🖨️ Print</button>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" style="text-align: center; color: #64748b;">No submissions found for today / specified criteria.</td>
+                <td colspan="6" style="text-align: center; color: #64748b;">No submissions found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <!-- PDF Preview Modal -->
-    <div id="pdfModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>📋 PDF Preview</h4>
+    <div id="pdfModal" class="modal" onclick="closeModalOutside(event)">
+        <div class="modal-content" id="modalContent">
+            <div class="modal-header" id="modalHeader">
+                <h4>📋 PDF Preview (A4 Size - Resizable / Movable)</h4>
                 <button class="close-btn" onclick="closePdfModal()">✕ Close</button>
             </div>
             <iframe id="pdfFrame" class="pdf-frame" src=""></iframe>
             <div class="modal-footer">
-                <button class="btn btn-print" onclick="confirmPrint()">🖨️ Print PDF</button>
+                <button class="btn btn-print" onclick="printFromModal()">🖨️ Confirm Print</button>
             </div>
         </div>
     </div>
+
+    <!-- Hidden iframe for direct printing without new window -->
+    <iframe id="printFrame" style="display:none;"></iframe>
 
     <script>
         function openPdfModal(id) {
@@ -106,19 +112,67 @@
             modal.style.display = 'none';
         }
 
-        function confirmPrint() {
+        function closeModalOutside(event) {
+            if (event.target.id === 'pdfModal') {
+                closePdfModal();
+            }
+        }
+
+        function directPrint(id) {
             if (confirm("Apni ki ei PDF-ti print korte chan?")) {
+                const printFrame = document.getElementById('printFrame');
+                printFrame.src = `/generate_pdf/${id}`;
+                printFrame.onload = function() {
+                    try {
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    } catch (e) {
+                        alert("Print dialog opened.");
+                    }
+                };
+            }
+        }
+
+        function printFromModal() {
+            if (confirm("Apni ki modal theke ei PDF-ti print korte chan?")) {
                 const iframe = document.getElementById('pdfFrame');
                 try {
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
                 } catch (e) {
-                    // Fallback if cross-origin restriction applies
-                    iframe.src += '#toolbar=0';
                     iframe.contentWindow.print();
                 }
             }
         }
+
+        // Make Modal Draggable
+        const modalContent = document.getElementById('modalContent');
+        const modalHeader = document.getElementById('modalHeader');
+        let isDragging = false, startX, startY, initialX, initialY;
+
+        modalHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = modalContent.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            modalContent.style.position = 'absolute';
+            modalContent.style.margin = '0';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            modalContent.style.left = `${initialX + dx}px`;
+            modalContent.style.top = `${initialY + dy}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
     </script>
 </body>
 </html>

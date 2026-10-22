@@ -89,7 +89,8 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    start_y = height - (15.5 * cm)
+    # Requirement 1: Shifted 1.7 cm upwards (Original was 15.5cm, now 15.5 - 1.7 = 13.8cm)
+    start_y = height - (13.8 * cm)
     left_margin = 5 * cm
 
     c.setFont("Times-Roman", 12)
@@ -132,7 +133,8 @@ def generate_pdf_file(data, output_path):
     p.wrap(width - left_margin - (2.0 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    sig_y = 20
+    # Shifted signature and photo sections upwards by 1.7 cm (~48 points)
+    sig_y = 20 + (1.7 * cm / 0.3528)  # approx adjustment
     photo_y = sig_y + 15
     photo_w, photo_h = 2.5 * cm, 3.5 * cm
     shifted_left = left_margin + (1.0 * cm)
@@ -155,7 +157,7 @@ def generate_pdf_file(data, output_path):
 
 @app.route('/')
 def index():
-    return redirect(url_for('client_form'))
+    return render_template('index.html')
 
 @app.route('/form', methods=['GET', 'POST'])
 def client_form():
@@ -169,7 +171,6 @@ def client_form():
             temp_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_filename)
             file.save(temp_photo_path)
         
-        # If user clicked "Confirm & Final Submit"
         if request.form.get('action_type') == 'confirm':
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
@@ -188,7 +189,6 @@ def client_form():
             data_id = cursor.lastrowid
             temp_path = form_data.get('temp_photo_path')
             if temp_path and os.path.exists(temp_path):
-                # Process and move to final upload folder
                 with open(temp_path, 'rb') as f:
                     final_path = process_and_save_photo(f, data_id)
                 cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (final_path, data_id))
@@ -201,7 +201,6 @@ def client_form():
             conn.close()
             return render_template('client_form.html', success=True)
 
-        # Otherwise, show Preview Page to client
         return render_template('client_preview.html', data=form_data, temp_photo_path=temp_photo_path)
 
     return render_template('client_form.html', success=False)
@@ -211,6 +210,7 @@ def admin_dashboard():
     today_str = datetime.now().strftime("%d/%m/%Y")
     search_date_raw = request.args.get('search_date', '').strip()
     search_gari = request.args.get('search_gari', '').strip().lower()
+    show_all = request.args.get('show_all', '').strip()
 
     search_date = ""
     if search_date_raw:
@@ -226,22 +226,27 @@ def admin_dashboard():
     query = "SELECT * FROM submissions WHERE 1=1"
     params = []
 
-    if search_date:
+    if show_all == '1':
+        # Show all historical records without date filter
+        pass
+    elif search_date:
         query += " AND date = ?"
         params.append(search_date)
     elif search_gari:
         query += " AND LOWER(gari_number) LIKE ?"
         params.append(f"%{search_gari}%")
     else:
+        # Default: Show current date records only
         query += " AND date = ?"
         params.append(today_str)
 
+    query += " ORDER BY id DESC"
     cursor.execute(query, params)
     rows = cursor.fetchall()
     submissions = [dict(row) for row in rows]
     conn.close()
 
-    return render_template('admin_dashboard.html', submissions=submissions, today=today_str, search_date=search_date_raw, search_gari=request.args.get('search_gari', ''))
+    return render_template('admin_dashboard.html', submissions=submissions, today=today_str, search_date=search_date_raw, search_gari=request.args.get('search_gari', ''), show_all=show_all)
 
 @app.route('/admin/edit/<int:data_id>', methods=['GET', 'POST'])
 def edit_submission(data_id):
@@ -269,6 +274,7 @@ def edit_submission(data_id):
             except Exception:
                 pass
 
+        # Update details; original submission date remains preserved unless explicitly edited here
         cursor.execute('''
             UPDATE submissions SET owner_name=?, owner_father=?, owner_address=?, gari_number=?, engine_no=?, chassis_no=?, driver_name=?, driver_father=?, driver_address=?, license_no=?, date=?
             WHERE id=?
