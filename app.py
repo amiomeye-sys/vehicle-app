@@ -92,8 +92,8 @@ def process_and_save_photo(file_input, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # TO WHOM theke shuru kore puro paragraph-ke 2cm nicher dike namanor jonno 11.0cm kora holo
-    start_y = height - (11.0 * cm)
+    # TO WHOM theke shuru kore puro paragraph 2cm nicher dike namano holo (11.0cm + 2.0cm = 13.0cm)
+    start_y = height - (13.0 * cm)
     left_margin = 4.5 * cm
 
     c.setFont("Times-Roman", 11)
@@ -136,7 +136,8 @@ def generate_pdf_file(data, output_path):
     p.wrap(width - left_margin - (1.5 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    sig_y = 3.5 * cm
+    # Signature line ebong photo box 1cm nicher dike namano holo (3.5cm - 1.0cm = 2.5cm)
+    sig_y = 2.5 * cm
     photo_y = sig_y + (0.5 * cm)
     photo_w, photo_h = 2.2 * cm, 3.0 * cm
     shifted_left = left_margin + (0.5 * cm)
@@ -288,7 +289,6 @@ def edit_submission(data_id):
             if photo_path:
                 cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
         
-        # Jodi admin photo remove/delete checkbox check kore
         if request.form.get('remove_photo') == '1':
             cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = ?', (data_id,))
 
