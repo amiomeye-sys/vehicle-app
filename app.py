@@ -89,8 +89,8 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # Paragraph-ke 1.5cm nicher dike namiye dewa holo (10.5cm - 1.5cm = 9.0cm)
-    start_y = height - (9.0 * cm)
+    # TO WHOM theke shuru kore puro paragraph-ke aro 2cm niche namiye dewa holo (9.0cm - 2.0cm = 7.0cm)
+    start_y = height - (7.0 * cm)
     left_margin = 4.5 * cm
 
     c.setFont("Times-Roman", 11)
@@ -126,7 +126,6 @@ def generate_pdf_file(data, output_path):
 
     formatted_text = TEMPLATE_TEXT.format(**clean_data)
     styles = getSampleStyleSheet()
-    # Text size 1pt boro kora holo (fontSize=11, leading=15)
     style = ParagraphStyle('StampStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=11, leading=15)
 
     current_y = start_y - 19 - (0.5 * cm)
@@ -134,7 +133,6 @@ def generate_pdf_file(data, output_path):
     p.wrap(width - left_margin - (1.5 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    # Signature line ebong photo box ager moto 3.5cm distance-e thik rakha holo
     sig_y = 3.5 * cm
     photo_y = sig_y + (0.5 * cm)
     photo_w, photo_h = 2.2 * cm, 3.0 * cm
@@ -171,6 +169,7 @@ def client_form():
             temp_filename = f"temp_{datetime.now().timestamp()}.png"
             temp_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_filename)
             file.save(temp_photo_path)
+            form_data['temp_photo_path'] = temp_photo_path
         
         if request.form.get('action_type') == 'confirm':
             conn = sqlite3.connect(DB_NAME)
@@ -287,7 +286,6 @@ def edit_submission(data_id):
             if photo_path:
                 cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
         
-        # Jodi admin photo remove/delete korte chay
         if request.form.get('remove_photo') == '1':
             cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = ?', (data_id,))
 
