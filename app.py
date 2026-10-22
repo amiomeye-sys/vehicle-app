@@ -89,23 +89,24 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    start_y = height - (15.5 * cm)
-    left_margin = 5 * cm
+    # Paragraph-ke aro upore set kora holo
+    start_y = height - (10.5 * cm)
+    left_margin = 4.5 * cm
 
-    c.setFont("Times-Roman", 12)
+    c.setFont("Times-Roman", 11)
     c.drawCentredString(width / 2.0, start_y, "TO WHOM IT MAY CONCERN")
     c.setLineWidth(1)
     c.line(width / 2.0 - 80, start_y - 3, width / 2.0 + 80, start_y - 3)
 
-    c.drawCentredString(width / 2.0, start_y - 18, "AUTHORITY LETTER")
-    c.line(width / 2.0 - 65, start_y - 21, width / 2.0 + 65, start_y - 21)
+    c.drawCentredString(width / 2.0, start_y - 16, "AUTHORITY LETTER")
+    c.line(width / 2.0 - 65, start_y - 19, width / 2.0 + 65, start_y - 19)
 
     input_date = data.get('date', datetime.now().strftime("%d/%m/%Y"))
     valid_date = calculate_valid_upto(input_date)
 
-    c.setFont("Helvetica-Bold", 11)
-    c.drawRightString(width - 55, start_y, f"DATE-{input_date}")
-    c.drawRightString(width - 55, start_y - 14, f"VALID UPTO-{valid_date}")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawRightString(width - 40, start_y, f"DATE-{input_date}")
+    c.drawRightString(width - 40, start_y - 12, f"VALID UPTO-{valid_date}")
 
     clean_data = {}
     for key in ["owner_name", "owner_father", "owner_address", "gari_number", "engine_no", "chassis_no", "driver_name", "driver_father", "driver_address", "license_no"]:
@@ -125,19 +126,19 @@ def generate_pdf_file(data, output_path):
 
     formatted_text = TEMPLATE_TEXT.format(**clean_data)
     styles = getSampleStyleSheet()
-    style = ParagraphStyle('StampStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=11, leading=16)
+    style = ParagraphStyle('StampStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14)
 
-    current_y = start_y - 21 - (1.0 * cm)
+    current_y = start_y - 19 - (0.5 * cm)
     p = Paragraph(formatted_text, style)
-    p.wrap(width - left_margin - (2.0 * cm), height)
+    p.wrap(width - left_margin - (1.5 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    # Signature line set at 3.5cm from bottom to prevent overlap
+    # Signature line ebong photo box thik 3.5cm nicher dike set kora holo
     sig_y = 3.5 * cm
-    photo_y = sig_y + (0.8 * cm)
-    photo_w, photo_h = 2.5 * cm, 3.5 * cm
-    shifted_left = left_margin + (1.0 * cm)
-    driver_sig_x = shifted_left - (1.0 * cm)
+    photo_y = sig_y + (0.5 * cm)
+    photo_w, photo_h = 2.2 * cm, 3.0 * cm
+    shifted_left = left_margin + (0.5 * cm)
+    driver_sig_x = shifted_left - (0.5 * cm)
 
     photo_path = data.get('photo_path')
     if photo_path and os.path.exists(photo_path):
@@ -148,9 +149,9 @@ def generate_pdf_file(data, output_path):
         except Exception:
             pass
 
-    c.setFont("Helvetica-Bold", 12)
+    c.setFont("Helvetica-Bold", 11)
     c.drawString(driver_sig_x, sig_y, "Signature of Driver")
-    c.drawString(width - 200, sig_y, "Signature of Regd. Owner")
+    c.drawString(width - 180, sig_y, "Signature of Regd. Owner")
     c.showPage()
     c.save()
 
