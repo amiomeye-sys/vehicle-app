@@ -79,7 +79,7 @@ def process_and_save_photo(file_obj, data_id):
         in_img.thumbnail((400, 400))
         final_photo = in_img.convert("RGB")
     except Exception:
-        final_photo = Image.new("RGB", (300, 400), (255, 255, 255))
+        return None
 
     photo_filename = f"photo_{data_id}_{datetime.now().timestamp()}.png"
     photo_save_path = os.path.join(app.config['UPLOAD_FOLDER'], photo_filename)
@@ -89,8 +89,8 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # Paragraph-ke aro upore set kora holo
-    start_y = height - (10.5 * cm)
+    # Paragraph-ke 1.5cm nicher dike namiye dewa holo (10.5cm - 1.5cm = 9.0cm)
+    start_y = height - (9.0 * cm)
     left_margin = 4.5 * cm
 
     c.setFont("Times-Roman", 11)
@@ -126,14 +126,15 @@ def generate_pdf_file(data, output_path):
 
     formatted_text = TEMPLATE_TEXT.format(**clean_data)
     styles = getSampleStyleSheet()
-    style = ParagraphStyle('StampStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14)
+    # Text size 1pt boro kora holo (fontSize=11, leading=15)
+    style = ParagraphStyle('StampStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=11, leading=15)
 
     current_y = start_y - 19 - (0.5 * cm)
     p = Paragraph(formatted_text, style)
     p.wrap(width - left_margin - (1.5 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    # Signature line ebong photo box thik 3.5cm nicher dike set kora holo
+    # Signature line ebong photo box ager moto 3.5cm distance-e thik rakha holo
     sig_y = 3.5 * cm
     photo_y = sig_y + (0.5 * cm)
     photo_w, photo_h = 2.2 * cm, 3.0 * cm
@@ -188,14 +189,17 @@ def client_form():
             
             data_id = cursor.lastrowid
             temp_path = form_data.get('temp_photo_path')
+            final_path = None
             if temp_path and os.path.exists(temp_path):
                 with open(temp_path, 'rb') as f:
                     final_path = process_and_save_photo(f, data_id)
-                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (final_path, data_id))
                 try:
                     os.remove(temp_path)
                 except Exception:
                     pass
+            
+            if final_path:
+                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (final_path, data_id))
 
             conn.commit()
             conn.close()
@@ -280,7 +284,12 @@ def edit_submission(data_id):
         file = request.files.get('driver_photo')
         if file and file.filename != '':
             photo_path = process_and_save_photo(file, data_id)
-            cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
+            if photo_path:
+                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
+        
+        # Jodi admin photo remove/delete korte chay
+        if request.form.get('remove_photo') == '1':
+            cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = ?', (data_id,))
 
         conn.commit()
         conn.close()
