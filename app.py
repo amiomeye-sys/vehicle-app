@@ -1,6 +1,7 @@
 import os
 import re
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, send_file, redirect, url_for, session
 from PIL import Image
@@ -15,14 +16,21 @@ app.secret_key = 'vehicle_auth_secret_key_123'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-DB_NAME = 'database.db'
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:tA736311%401%40@db.aubcntpmkxgxekddpsdy.supabase.co:5432/postgres')
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS submissions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             owner_name TEXT,
             owner_father TEXT,
             owner_address TEXT,
@@ -38,6 +46,7 @@ def init_db():
         )
     ''')
     conn.commit()
+    cursor.close()
     conn.close()
 
 init_db()
@@ -179,13 +188,13 @@ def client_form():
             temp_photo_path = session.get('temp_photo_path', '')
 
         if request.form.get('action_type') == 'confirm':
-            conn = sqlite3.connect(DB_NAME)
+            conn = get_db_connection()
             cursor = conn.cursor()
             date_str = datetime.now().strftime("%d/%m/%Y")
 
             cursor.execute('''
                 INSERT INTO submissions (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date, photo_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
             ''', (
                 form_data.get('owner_name', ''), form_data.get('owner_father', ''), form_data.get('owner_address', ''),
                 form_data.get('gari_number', ''), form_data.get('engine_no', ''), form_data.get('chassis_no', ''),
@@ -193,7 +202,7 @@ def client_form():
                 form_data.get('license_no', ''), date_str, None
             ))
             
-            data_id = cursor.lastrowid
+            data_id = cursor.fetchone()[0]
             final_path = None
             if temp_photo_path and os.path.exists(temp_photo_path):
                 final_path = process_and_save_photo(temp_photo_path, data_id)
@@ -203,9 +212,10 @@ def client_form():
                     pass
             
             if final_path:
-                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (final_path, data_id))
+                cursor.execute('UPDATE submissions SET photo_path = %s WHERE id = %s', (final_path, data_id))
 
             conn.commit()
+            cursor.close()
             conn.close()
             session.pop('form_data', None)
             session.pop('temp_photo_path', None)
@@ -231,9 +241,8 @@ def admin_dashboard():
         except Exception:
             search_date = search_date_raw
 
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     query = "SELECT * FROM submissions WHERE 1=1"
     params = []
@@ -241,28 +250,28 @@ def admin_dashboard():
     if show_all == '1':
         pass
     elif search_date:
-        query += " AND date = ?"
+        query += " AND date = %s"
         params.append(search_date)
     elif search_gari:
-        query += " AND LOWER(gari_number) LIKE ?"
+        query += " AND LOWER(gari_number) LIKE %s"
         params.append(f"%{search_gari}%")
     else:
-        query += " AND date = ?"
+        query += " AND date = %s"
         params.append(today_str)
 
     query += " ORDER BY id DESC"
     cursor.execute(query, params)
     rows = cursor.fetchall()
     submissions = [dict(row) for row in rows]
+    cursor.close()
     conn.close()
 
     return render_template('admin_dashboard.html', submissions=submissions, today=today_str, search_date=search_date_raw, search_gari=request.args.get('search_gari', ''), show_all=show_all)
 
 @app.route('/admin/edit/<int:data_id>', methods=['GET', 'POST'])
 def edit_submission(data_id):
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     if request.method == 'POST':
         owner_name = request.form.get('owner_name')
@@ -285,25 +294,27 @@ def edit_submission(data_id):
                 pass
 
         cursor.execute('''
-            UPDATE submissions SET owner_name=?, owner_father=?, owner_address=?, gari_number=?, engine_no=?, chassis_no=?, driver_name=?, driver_father=?, driver_address=?, license_no=?, date=?
-            WHERE id=?
+            UPDATE submissions SET owner_name=%s, owner_father=%s, owner_address=%s, gari_number=%s, engine_no=%s, chassis_no=%s, driver_name=%s, driver_father=%s, driver_address=%s, license_no=%s, date=%s
+            WHERE id=%s
         ''', (owner_name, owner_father, owner_address, gari_number, engine_no, chassis_no, driver_name, driver_father, driver_address, license_no, date_str, data_id))
 
         file = request.files.get('driver_photo')
         if file and file.filename != '':
             photo_path = process_and_save_photo(file, data_id)
             if photo_path:
-                cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
+                cursor.execute('UPDATE submissions SET photo_path = %s WHERE id = %s', (photo_path, data_id))
         
         if request.form.get('remove_photo') == '1':
-            cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = ?', (data_id,))
+            cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = %s', (data_id,))
 
         conn.commit()
+        cursor.close()
         conn.close()
         return redirect(url_for('admin_dashboard'))
 
-    cursor.execute("SELECT * FROM submissions WHERE id = ?", (data_id,))
+    cursor.execute("SELECT * FROM submissions WHERE id = %s", (data_id,))
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
 
     if not row:
@@ -319,11 +330,11 @@ def edit_submission(data_id):
 
 @app.route('/generate_pdf/<int:data_id>')
 def pdf_preview(data_id):
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM submissions WHERE id = ?", (data_id,))
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor.execute("SELECT * FROM submissions WHERE id = %s", (data_id,))
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
 
     if not row:

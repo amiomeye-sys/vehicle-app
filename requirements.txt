@@ -3,3 +3,4 @@ Pillow
 rembg[cpu]
 reportlab
 gunicorn
+psycopg2-binary
