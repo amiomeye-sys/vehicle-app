@@ -2,83 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Details Entry</title>
+    <title>Vehicle Authorization Form</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #0d1527; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; }
-        h3 { color: #38bdf8; text-align: center; margin-bottom: 15px; font-size: 18px; font-weight: 600; }
-        .success-box { background: #065f46; color: #34d399; padding: 8px; border-radius: 4px; text-align: center; margin-bottom: 12px; font-size: 12px; }
-        
-        .photo-container { background: #0a1120; border: 1px solid #25334d; padding: 12px; border-radius: 6px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
-        .photo-preview { width: 90px; height: 115px; border: 1px dashed #38bdf8; display: flex; align-items: center; justify-content: center; color: #64748b; text-align: center; font-size: 11px; background: #111a2e; overflow: hidden; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
-        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-actions { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-        .btn-photo { padding: 6px 10px; font-size: 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; text-align: center; }
-        .btn-add { background: #0284c7; color: white; }
-        .btn-remove { background: #ef4444; color: white; }
-
-        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
-        label { font-weight: bold; color: #cbd5e1; font-size: 12px; }
-        input[type="text"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #1e293b; background: #111a2e; color: #fff; font-size: 13px; text-transform: uppercase; }
-        input[type="text"]:focus { outline: none; border-color: #38bdf8; }
-        
-        .btn-submit { width: 100%; padding: 10px; background: #10b981; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 14px; cursor: pointer; margin-top: 10px; }
-        .btn-submit:hover { background: #059669; }
+        body { background-color: #0d1527; color: #fff; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
+        h3 { color: #38bdf8; margin-bottom: 15px; }
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+        input { padding: 8px; border-radius: 4px; border: 1px solid #25334d; background: #0d1527; color: #fff; text-transform: uppercase; }
+        .btn { padding: 10px 20px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .success-msg { color: #10b981; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>✨ Vehicle Authorization Form ✨</h3>
+        <h3>🚗 Vehicle Authorization Form</h3>
         {% if success %}
-            <div class="success-box">✅ Details Submitted Successfully! You can close this page.</div>
+        <div class="success-msg">✅ Form submitted successfully!</div>
         {% endif %}
-        <form action="/form" method="POST" enctype="multipart/form-data">
-            
-            <!-- Driver Photo Option -->
-            <div class="photo-container">
-                <div class="photo-preview" id="previewContainer" onclick="document.getElementById('photoInput').click();">
-                    Click Photo<br>(Auto)
-                </div>
-                <div class="photo-actions">
-                    <label>Driver Photo:</label>
-                    <button type="button" class="btn-photo btn-add" onclick="document.getElementById('photoInput').click();">📷 Add / Change Photo</button>
-                    <button type="button" class="btn-photo btn-remove" onclick="removePhoto()">✕ Remove Photo</button>
-                </div>
-                <input type="file" name="driver_photo" accept="image/*" id="photoInput" style="display: none;" onchange="previewImage(event)">
+        <form method="POST" action="/form" enctype="multipart/form-data">
+            <input type="hidden" name="temp_photo_path" value="{{ temp_photo_path }}">
+            <div class="form-group">
+                <label>Owner Name:</label>
+                <input type="text" name="owner_name" value="{{ prefill.get('owner_name', '') if prefill else '' }}" required>
             </div>
-
-            <div class="form-group"><label>Owner Name:</label><input type="text" name="owner_name" required></div>
-            <div class="form-group"><label>Owner Father Name:</label><input type="text" name="owner_father" required></div>
-            <div class="form-group"><label>Owner Address:</label><input type="text" name="owner_address" required></div>
-            <div class="form-group"><label>Gari Number:</label><input type="text" name="gari_number" required></div>
-            <div class="form-group"><label>Engine No:</label><input type="text" name="engine_no" required></div>
-            <div class="form-group"><label>Chassis Number:</label><input type="text" name="chassis_no" required></div>
-            <div class="form-group"><label>Driver Name:</label><input type="text" name="driver_name" required></div>
-            <div class="form-group"><label>Driver Father Name:</label><input type="text" name="driver_father" required></div>
-            <div class="form-group"><label>Driver Address:</label><input type="text" name="driver_address" required></div>
-            <div class="form-group"><label>License Number:</label><input type="text" name="license_no" required></div>
-
-            <button type="submit" class="btn-submit">Submit Details</button>
+            <div class="form-group">
+                <label>Owner Father's Name:</label>
+                <input type="text" name="owner_father" value="{{ prefill.get('owner_father', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Owner Address:</label>
+                <input type="text" name="owner_address" value="{{ prefill.get('owner_address', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Gari Number:</label>
+                <input type="text" name="gari_number" value="{{ prefill.get('gari_number', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Engine No:</label>
+                <input type="text" name="engine_no" value="{{ prefill.get('engine_no', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Chassis No:</label>
+                <input type="text" name="chassis_no" value="{{ prefill.get('chassis_no', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Name:</label>
+                <input type="text" name="driver_name" value="{{ prefill.get('driver_name', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Father's Name:</label>
+                <input type="text" name="driver_father" value="{{ prefill.get('driver_father', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Address:</label>
+                <input type="text" name="driver_address" value="{{ prefill.get('driver_address', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>License No:</label>
+                <input type="text" name="license_no" value="{{ prefill.get('license_no', '') if prefill else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Driver Photo:</label>
+                <input type="file" name="driver_photo">
+                {% if temp_photo_path %}
+                <small style="color: #38bdf8; margin-top: 5px;">Photo already uploaded.</small>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn">Preview Details ➡</button>
         </form>
     </div>
-
-    <script>
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function(){
-                const output = document.getElementById('previewContainer');
-                output.innerHTML = `<img src="${reader.result}">`;
-            };
-            if(event.target.files[0]) {
-                reader.readAsDataURL(event.target.files[0]);
-            }
-        }
-        function removePhoto() {
-            document.getElementById('previewContainer').innerHTML = 'Click Photo<br>(Auto)';
-            document.getElementById('photoInput').value = '';
-        }
-    </script>
 </body>
 </html>

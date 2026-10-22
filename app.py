@@ -2,7 +2,7 @@ import os
 import re
 import sqlite3
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for, session
 from PIL import Image
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -11,6 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import Paragraph
 
 app = Flask(__name__)
+app.secret_key = 'vehicle_auth_secret_key_123'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -92,7 +93,6 @@ def process_and_save_photo(file_input, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # TO WHOM theke shuru kore puro paragraph 2cm nicher dike namano holo (11.0cm + 2.0cm = 13.0cm)
     start_y = height - (13.0 * cm)
     left_margin = 4.5 * cm
 
@@ -136,7 +136,6 @@ def generate_pdf_file(data, output_path):
     p.wrap(width - left_margin - (1.5 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    # Signature line ebong photo box 1cm nicher dike namano holo (3.5cm - 1.0cm = 2.5cm)
     sig_y = 2.5 * cm
     photo_y = sig_y + (0.5 * cm)
     photo_w, photo_h = 2.2 * cm, 3.0 * cm
@@ -166,15 +165,19 @@ def index():
 def client_form():
     if request.method == 'POST':
         form_data = request.form.to_dict()
-        file = request.files.get('driver_photo')
+        session['form_data'] = form_data
         
-        temp_photo_path = None
+        file = request.files.get('driver_photo')
+        temp_photo_path = form_data.get('temp_photo_path', '')
+        
         if file and file.filename != '':
             temp_filename = f"temp_{datetime.now().timestamp()}.png"
             temp_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_filename)
             file.save(temp_photo_path)
-            form_data['temp_photo_path'] = temp_photo_path
-        
+            session['temp_photo_path'] = temp_photo_path
+        elif not temp_photo_path:
+            temp_photo_path = session.get('temp_photo_path', '')
+
         if request.form.get('action_type') == 'confirm':
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
@@ -191,12 +194,11 @@ def client_form():
             ))
             
             data_id = cursor.lastrowid
-            temp_path = form_data.get('temp_photo_path')
             final_path = None
-            if temp_path and os.path.exists(temp_path):
-                final_path = process_and_save_photo(temp_path, data_id)
+            if temp_photo_path and os.path.exists(temp_photo_path):
+                final_path = process_and_save_photo(temp_photo_path, data_id)
                 try:
-                    os.remove(temp_path)
+                    os.remove(temp_photo_path)
                 except Exception:
                     pass
             
@@ -205,11 +207,15 @@ def client_form():
 
             conn.commit()
             conn.close()
-            return render_template('client_form.html', success=True)
+            session.pop('form_data', None)
+            session.pop('temp_photo_path', None)
+            return render_template('client_form.html', success=True, prefill=None)
 
         return render_template('client_preview.html', data=form_data, temp_photo_path=temp_photo_path)
 
-    return render_template('client_form.html', success=False)
+    prefill = session.get('form_data', {})
+    temp_photo_path = session.get('temp_photo_path', '')
+    return render_template('client_form.html', success=False, prefill=prefill, temp_photo_path=temp_photo_path)
 
 @app.route('/admin')
 def admin_dashboard():

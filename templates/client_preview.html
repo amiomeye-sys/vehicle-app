@@ -5,10 +5,12 @@
     <title>Preview Submission</title>
     <style>
         body { background-color: #0d1527; color: #fff; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
+        .container { max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; text-transform: uppercase; }
         h3 { color: #38bdf8; margin-bottom: 15px; }
         p { margin: 8px 0; font-size: 14px; }
-        .btn-group { margin-top: 20px; display: flex; gap: 10px; }
+        .photo-box { margin: 15px 0; }
+        .photo-box img { width: 100px; height: 130px; object-fit: cover; border: 2px solid #38bdf8; border-radius: 4px; }
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; text-transform: none; }
         .btn { padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; text-decoration: none; }
         .btn-confirm { background: #10b981; color: white; }
         .btn-back { background: #475569; color: white; }
@@ -17,6 +19,14 @@
 <body>
     <div class="container">
         <h3>📋 Preview Your Details</h3>
+        
+        {% if temp_photo_path %}
+        <div class="photo-box">
+            <p><strong>Driver Photo:</strong></p>
+            <img src="/{{ temp_photo_path }}" alt="Driver Photo">
+        </div>
+        {% endif %}
+
         <p><strong>Owner Name:</strong> {{ data.owner_name }}</p>
         <p><strong>Owner Father's Name:</strong> {{ data.owner_father }}</p>
         <p><strong>Owner Address:</strong> {{ data.owner_address }}</p>
