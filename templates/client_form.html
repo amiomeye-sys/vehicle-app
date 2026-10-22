@@ -16,7 +16,7 @@
         /* Photo Box & Preview Styling */
         .photo-section { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
         .photo-box { width: 90px; height: 110px; border: 2px dashed #38bdf8; border-radius: 6px; background: #0d1527; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
         .photo-box span { font-size: 11px; color: #64748b; text-align: center; padding: 5px; }
 
         .btn { width: 100%; padding: 12px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 15px; }
@@ -79,8 +79,8 @@
                 <label>Driver Photo:</label>
                 <div class="photo-section">
                     <div class="photo-box" id="photoBox">
-                        <span id="placeholderText">No Photo</span>
-                        <img id="photoPreview" src="#" alt="Preview">
+                        <span id="placeholderText" {% if temp_photo_path %}style="display:none;"{% endif %}>No Photo</span>
+                        <img id="photoPreview" src="{% if temp_photo_path %}/{{ temp_photo_path }}{% endif %}" alt="Preview" {% if not temp_photo_path %}style="display:none;"{% else %}style="display:block;"{% endif %}>
                     </div>
                     <div style="flex: 1;">
                         <input type="file" name="driver_photo" id="photoInput" accept="image/*" onchange="previewImage(event)">

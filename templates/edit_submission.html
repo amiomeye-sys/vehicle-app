@@ -2,15 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Submission</title>
     <style>
+        * { box-sizing: border-box; }
         body { background-color: #0d1527; color: #fff; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
-        h3 { color: #38bdf8; margin-bottom: 15px; }
-        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-        input { padding: 8px; border-radius: 4px; border: 1px solid #25334d; background: #0d1527; color: #fff; }
-        .btn-group { margin-top: 20px; display: flex; gap: 10px; }
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; text-decoration: none; }
+        .container { max-width: 850px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
+        h3 { color: #38bdf8; margin-bottom: 20px; border-bottom: 1px solid #25334d; padding-bottom: 10px; }
+        
+        .admin-edit-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .form-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group.full-width { grid-column: span 2; }
+        
+        label { font-size: 12px; color: #cbd5e1; }
+        input[type="text"], input[type="date"], input[type="file"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #25334d; background: #0d1527; color: #fff; font-size: 13px; }
+        
+        .photo-panel { width: 200px; display: flex; flex-direction: column; align-items: center; gap: 10px; background: #1e293b; padding: 15px; border-radius: 6px; border: 1px solid #25334d; height: fit-content; }
+        .photo-panel img { width: 120px; height: 150px; object-fit: cover; border: 2px solid #38bdf8; border-radius: 4px; }
+        .photo-panel span { font-size: 12px; color: #94a3b8; text-align: center; }
+
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; grid-column: span 2; width: 100%; }
+        .btn { padding: 10px 20px; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; text-decoration: none; font-size: 14px; }
         .btn-save { background: #38bdf8; color: #000; }
         .btn-back { background: #475569; color: white; }
     </style>
@@ -19,62 +32,75 @@
     <div class="container">
         <h3>✏️ Edit Submission #{{ item.id }}</h3>
         <form method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label>Owner Name:</label>
-                <input type="text" name="owner_name" value="{{ item.owner_name }}">
-            </div>
-            <div class="form-group">
-                <label>Owner Father's Name:</label>
-                <input type="text" name="owner_father" value="{{ item.owner_father }}">
-            </div>
-            <div class="form-group">
-                <label>Owner Address:</label>
-                <input type="text" name="owner_address" value="{{ item.owner_address }}">
-            </div>
-            <div class="form-group">
-                <label>Gari Number:</label>
-                <input type="text" name="gari_number" value="{{ item.gari_number }}">
-            </div>
-            <div class="form-group">
-                <label>Engine No:</label>
-                <input type="text" name="engine_no" value="{{ item.engine_no }}">
-            </div>
-            <div class="form-group">
-                <label>Chassis No:</label>
-                <input type="text" name="chassis_no" value="{{ item.chassis_no }}">
-            </div>
-            <div class="form-group">
-                <label>Driver Name:</label>
-                <input type="text" name="driver_name" value="{{ item.driver_name }}">
-            </div>
-            <div class="form-group">
-                <label>Driver Father's Name:</label>
-                <input type="text" name="driver_father" value="{{ item.driver_father }}">
-            </div>
-            <div class="form-group">
-                <label>Driver Address:</label>
-                <input type="text" name="driver_address" value="{{ item.driver_address }}">
-            </div>
-            <div class="form-group">
-                <label>License No:</label>
-                <input type="text" name="license_no" value="{{ item.license_no }}">
-            </div>
-            <div class="form-group">
-                <label>Authority Date:</label>
-                <input type="date" name="date" value="{{ formatted_date }}">
-            </div>
-            <div class="form-group">
-                <label>Update Driver Photo:</label>
-                <input type="file" name="driver_photo">
-            </div>
-            <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
-                <input type="checkbox" name="remove_photo" value="1" id="remove_photo" style="width: auto;">
-                <label for="remove_photo" style="color: #ef4444; cursor: pointer;">Remove existing photo</label>
-            </div>
+            <div class="admin-edit-layout">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Owner Name:</label>
+                        <input type="text" name="owner_name" value="{{ item.owner_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Owner Father's Name:</label>
+                        <input type="text" name="owner_father" value="{{ item.owner_father }}">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Owner Address:</label>
+                        <input type="text" name="owner_address" value="{{ item.owner_address }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Gari Number:</label>
+                        <input type="text" name="gari_number" value="{{ item.gari_number }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Engine No:</label>
+                        <input type="text" name="engine_no" value="{{ item.engine_no }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Chassis No:</label>
+                        <input type="text" name="chassis_no" value="{{ item.chassis_no }}">
+                    </div>
+                    <div class="form-group">
+                        <label>License No:</label>
+                        <input type="text" name="license_no" value="{{ item.license_no }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Driver Name:</label>
+                        <input type="text" name="driver_name" value="{{ item.driver_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Driver Father's Name:</label>
+                        <input type="text" name="driver_father" value="{{ item.driver_father }}">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Driver Address:</label>
+                        <input type="text" name="driver_address" value="{{ item.driver_address }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Authority Date:</label>
+                        <input type="date" name="date" value="{{ formatted_date }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Update Photo:</label>
+                        <input type="file" name="driver_photo">
+                    </div>
+                    <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 8px;">
+                        <input type="checkbox" name="remove_photo" value="1" id="remove_photo" style="width: auto;">
+                        <label for="remove_photo" style="color: #ef4444; cursor: pointer;">Remove existing photo</label>
+                    </div>
 
-            <div class="btn-group">
-                <button type="submit" class="btn btn-save">💾 Save Changes</button>
-                <a href="/admin" class="btn btn-back">cancel</a>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-save">💾 Save Changes</button>
+                        <a href="/admin" class="btn btn-back">Cancel</a>
+                    </div>
+                </div>
+
+                <div class="photo-panel">
+                    <label>Current Photo</label>
+                    {% if item.photo_path %}
+                    <img src="/{{ item.photo_path }}" alt="Driver Photo">
+                    {% else %}
+                    <span>No Photo Available</span>
+                    {% endif %}
+                </div>
             </div>
         </form>
     </div>
