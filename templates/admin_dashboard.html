@@ -119,7 +119,7 @@
         }
 
         function directPrint(id) {
-            if (confirm("Apni ki ei PDF-ti print korte chan?")) {
+            if (confirm("Apni ki ei PDF-ti print korte chan? (Yes/No)")) {
                 const printFrame = document.getElementById('printFrame');
                 printFrame.src = `/generate_pdf/${id}`;
                 printFrame.onload = function() {
@@ -134,7 +134,7 @@
         }
 
         function printFromModal() {
-            if (confirm("Apni ki modal theke ei PDF-ti print korte chan?")) {
+            if (confirm("Apni ki modal theke ei PDF-ti print korte chan? (Yes/No)")) {
                 const iframe = document.getElementById('pdfFrame');
                 try {
                     iframe.contentWindow.focus();

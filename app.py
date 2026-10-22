@@ -89,8 +89,7 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # Requirement 1: Shifted 1.7 cm upwards (Original was 15.5cm, now 15.5 - 1.7 = 13.8cm)
-    start_y = height - (13.8 * cm)
+    start_y = height - (15.5 * cm)
     left_margin = 5 * cm
 
     c.setFont("Times-Roman", 12)
@@ -133,9 +132,9 @@ def generate_pdf_file(data, output_path):
     p.wrap(width - left_margin - (2.0 * cm), height)
     p.drawOn(c, left_margin, current_y - p.height)
 
-    # Shifted signature and photo sections upwards by 1.7 cm (~48 points)
-    sig_y = 20 + (1.7 * cm / 0.3528)  # approx adjustment
-    photo_y = sig_y + 15
+    # Signature line set at 3.5cm from bottom to prevent overlap
+    sig_y = 3.5 * cm
+    photo_y = sig_y + (0.8 * cm)
     photo_w, photo_h = 2.5 * cm, 3.5 * cm
     shifted_left = left_margin + (1.0 * cm)
     driver_sig_x = shifted_left - (1.0 * cm)
@@ -227,7 +226,6 @@ def admin_dashboard():
     params = []
 
     if show_all == '1':
-        # Show all historical records without date filter
         pass
     elif search_date:
         query += " AND date = ?"
@@ -236,7 +234,6 @@ def admin_dashboard():
         query += " AND LOWER(gari_number) LIKE ?"
         params.append(f"%{search_gari}%")
     else:
-        # Default: Show current date records only
         query += " AND date = ?"
         params.append(today_str)
 
@@ -274,7 +271,6 @@ def edit_submission(data_id):
             except Exception:
                 pass
 
-        # Update details; original submission date remains preserved unless explicitly edited here
         cursor.execute('''
             UPDATE submissions SET owner_name=?, owner_father=?, owner_address=?, gari_number=?, engine_no=?, chassis_no=?, driver_name=?, driver_father=?, driver_address=?, license_no=?, date=?
             WHERE id=?
