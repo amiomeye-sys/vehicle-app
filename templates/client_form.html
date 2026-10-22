@@ -2,25 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Authorization Form</title>
     <style>
-        body { background-color: #0d1527; color: #fff; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 600px; background: #131d31; padding: 20px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
-        h3 { color: #38bdf8; margin-bottom: 15px; }
-        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-        input { padding: 8px; border-radius: 4px; border: 1px solid #25334d; background: #0d1527; color: #fff; text-transform: uppercase; }
-        .btn { padding: 10px 20px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        .success-msg { color: #10b981; font-weight: bold; margin-bottom: 15px; }
+        * { box-sizing: border-box; }
+        body { background-color: #0d1527; color: #fff; font-family: sans-serif; padding: 10px; margin: 0; }
+        .container { max-width: 500px; background: #131d31; padding: 15px; border-radius: 8px; border: 1px solid #25334d; margin: auto; }
+        h3 { color: #38bdf8; margin-bottom: 12px; font-size: 18px; text-align: center; }
+        .form-group { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 13px; color: #cbd5e1; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #25334d; background: #0d1527; color: #fff; text-transform: uppercase; font-size: 14px; }
+        
+        /* Photo Box & Preview Styling */
+        .photo-section { display: flex; align-items: center; gap: 15px; margin-top: 5px; }
+        .photo-box { width: 90px; height: 110px; border: 2px dashed #38bdf8; border-radius: 6px; background: #0d1527; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-box span { font-size: 11px; color: #64748b; text-align: center; padding: 5px; }
+
+        .btn { width: 100%; padding: 12px; background: #38bdf8; color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; margin-top: 15px; font-size: 15px; }
+        .success-msg { background: #065f46; color: #34d399; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 12px; text-align: center; font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h3>🚗 Vehicle Authorization Form</h3>
+        
         {% if success %}
         <div class="success-msg">✅ Form submitted successfully!</div>
         {% endif %}
+
         <form method="POST" action="/form" enctype="multipart/form-data">
             <input type="hidden" name="temp_photo_path" value="{{ temp_photo_path }}">
+            
             <div class="form-group">
                 <label>Owner Name:</label>
                 <input type="text" name="owner_name" value="{{ prefill.get('owner_name', '') if prefill else '' }}" required>
@@ -61,15 +74,40 @@
                 <label>License No:</label>
                 <input type="text" name="license_no" value="{{ prefill.get('license_no', '') if prefill else '' }}" required>
             </div>
+            
             <div class="form-group">
                 <label>Driver Photo:</label>
-                <input type="file" name="driver_photo">
-                {% if temp_photo_path %}
-                <small style="color: #38bdf8; margin-top: 5px;">Photo already uploaded.</small>
-                {% endif %}
+                <div class="photo-section">
+                    <div class="photo-box" id="photoBox">
+                        <span id="placeholderText">No Photo</span>
+                        <img id="photoPreview" src="#" alt="Preview">
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="file" name="driver_photo" id="photoInput" accept="image/*" onchange="previewImage(event)">
+                    </div>
+                </div>
             </div>
+
             <button type="submit" class="btn">Preview Details ➡</button>
         </form>
     </div>
+
+    <script>
+        function previewImage(event) {
+            const reader = new FileReader();
+            const preview = document.getElementById('photoPreview');
+            const placeholder = document.getElementById('placeholderText');
+            
+            reader.onload = function() {
+                preview.src = reader.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+            
+            if(event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+    </script>
 </body>
 </html>
