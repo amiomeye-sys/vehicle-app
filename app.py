@@ -73,9 +73,12 @@ def calculate_valid_upto(date_str):
     except Exception:
         return ""
 
-def process_and_save_photo(file_obj, data_id):
+def process_and_save_photo(file_input, data_id):
     try:
-        in_img = Image.open(file_obj.stream)
+        if hasattr(file_input, 'stream'):
+            in_img = Image.open(file_input.stream)
+        else:
+            in_img = Image.open(file_input)
         in_img.thumbnail((400, 400))
         final_photo = in_img.convert("RGB")
     except Exception:
@@ -190,8 +193,7 @@ def client_form():
             temp_path = form_data.get('temp_photo_path')
             final_path = None
             if temp_path and os.path.exists(temp_path):
-                with open(temp_path, 'rb') as f:
-                    final_path = process_and_save_photo(f, data_id)
+                final_path = process_and_save_photo(temp_path, data_id)
                 try:
                     os.remove(temp_path)
                 except Exception:
@@ -286,6 +288,7 @@ def edit_submission(data_id):
             if photo_path:
                 cursor.execute('UPDATE submissions SET photo_path = ? WHERE id = ?', (photo_path, data_id))
         
+        # Jodi admin photo remove/delete checkbox check kore
         if request.form.get('remove_photo') == '1':
             cursor.execute('UPDATE submissions SET photo_path = NULL WHERE id = ?', (data_id,))
 
