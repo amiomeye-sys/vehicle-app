@@ -89,8 +89,8 @@ def process_and_save_photo(file_obj, data_id):
 def generate_pdf_file(data, output_path):
     c = canvas.Canvas(output_path, pagesize=A4)
     width, height = A4
-    # TO WHOM theke shuru kore puro paragraph-ke aro 2cm niche namiye dewa holo (9.0cm - 2.0cm = 7.0cm)
-    start_y = height - (7.0 * cm)
+    # TO WHOM theke shuru kore puro paragraph-ke 2cm nicher dike namanor jonno 11.0cm kora holo
+    start_y = height - (11.0 * cm)
     left_margin = 4.5 * cm
 
     c.setFont("Times-Roman", 11)
